@@ -1,6 +1,5 @@
 # Learning-Management-System
-
-{
+`{
   "name": "learning-management", // The name of your project
   "version": "0.1.0", // Initial version of your project
   "private": true, // Marks the project as private to prevent accidental publication to npm
@@ -69,3 +68,4 @@
     "typescript": "^5" // TypeScript language support
   }
 }
+`
