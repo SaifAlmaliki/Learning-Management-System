@@ -11,8 +11,7 @@ COPY package*.json ./
 RUN ls -l /app
 
 # Install dependencies with verbose logs
-RUN microdnf update -y && microdnf install -y gcc-c++ make python3 \
-    && npm install --verbose
+RUN npm install --verbose
 
 # Copy the rest of the application source code
 COPY . .
