@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies with verbose logs and ensure system deps are available
-RUN yum update -y && yum install -y gcc-c++ make python3
+RUN microdnf update -y && microdnf install -y gcc-c++ make python3
 RUN npm install --verbose
 
 # Copy the rest of the application's source code
