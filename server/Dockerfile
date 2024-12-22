@@ -7,7 +7,10 @@ WORKDIR /app
 # Copy only package.json and lock file first
 COPY package*.json ./
 
-# Install dependencies with verbose logs and ensure system deps are available
+# Debugging step to verify package.json is copied
+RUN ls -l /app
+
+# Install dependencies with verbose logs
 RUN microdnf update -y && microdnf install -y gcc-c++ make python3
 RUN npm install --verbose
 
