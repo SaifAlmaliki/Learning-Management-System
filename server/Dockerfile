@@ -4,25 +4,32 @@ FROM public.ecr.aws/lambda/nodejs:20 AS build
 # Set the working directory
 WORKDIR /app
 
-# Copy package.json and lock file, install dependencies
+# Copy only package.json and lock file
 COPY package*.json ./
+
+# Verify the files are copied
+RUN ls -l /app
+
+# Install dependencies with verbose logs
 RUN microdnf update -y && microdnf install -y gcc-c++ make python3 \
     && npm install --verbose
 
-# Copy application source code and build TypeScript files
+# Copy the rest of the application source code
 COPY . .
+
+# Build TypeScript files
 RUN npm run build
 
-# Prune dev dependencies
+# Remove dev dependencies
 RUN npm prune --production
 
-# Production image based on the same Lambda base image
+# Use a second stage for the production image
 FROM public.ecr.aws/lambda/nodejs:20
 
 # Set the working directory
 WORKDIR ${LAMBDA_TASK_ROOT}
 
-# Copy necessary files from the build stage
+# Copy built files and dependencies from the build stage
 COPY --from=build /app/dist ${LAMBDA_TASK_ROOT}
 COPY --from=build /app/node_modules ${LAMBDA_TASK_ROOT}/node_modules
 COPY --from=build /app/package*.json ${LAMBDA_TASK_ROOT}
