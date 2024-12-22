@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { WizardStepperProps } from "@/types";
 import { Check } from "lucide-react";
 import React from "react";
 

@@ -6,6 +6,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { FileText } from "lucide-react";
+import { AccordionSectionsProps } from "@/types";
 
 const AccordionSections = ({ sections }: AccordionSectionsProps) => {
   return (
