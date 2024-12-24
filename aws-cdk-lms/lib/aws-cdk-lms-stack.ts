@@ -20,8 +20,10 @@ export class AwsCdkLmsStack extends cdk.Stack {
 
       // 1. Create Lambda function
       const backendLambda = new lambda.Function(this, 'LmsExpressLambda', {
+        functionName: 'lms-express-lambda',
         runtime: lambda.Runtime.NODEJS_20_X,
         handler: 'index.handler',
+        timeout: cdk.Duration.seconds(30),
         code: lambda.Code.fromAsset(
           // Path to your compiled code (assuming `dist/index.js`).
           path.join(__dirname, '../../server/dist')
@@ -47,13 +49,12 @@ export class AwsCdkLmsStack extends cdk.Stack {
 
       // 2. Create an API Gateway to proxy all requests to the Lambda
       const backendApi = new apigateway.LambdaRestApi(this, 'LmsApiGateway', {
+        restApiName: 'lms-backend-api',
         handler: backendLambda,
-        // If you want to configure custom domain, logging, etc.,
-        // you can do so here. By default it will create a new API
-        // with a proxy integration for your Lambda.
         proxy: true,
         deployOptions: {
-          stageName: 'dev', // e.g. /dev
+          stageName: 'dev',
+          description: 'Development Stage for the LMS Backend',
         },
       });
 
