@@ -28,7 +28,7 @@ if (!isProduction) {
   // Use DynamoDB Local
   dynamoose.aws.ddb.local();
   client = new DynamoDBClient({
-    endpoint: "http://localhost:8001",
+    endpoint: "http://localhost:8000",
     region: "eu-central-1",
     credentials: {
       accessKeyId: "dummyKey123",
