@@ -7,6 +7,7 @@ import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as path from 'path';
 import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
 
@@ -16,116 +17,54 @@ export class AwsCdkLmsStack extends cdk.Stack {
 
     // ===================== Add Global Tag ===================== //
     cdk.Tags.of(this).add('Project', 'learning-management-system');
-    /*
-    // ===================== DynamoDB Tables ===================== //
-    const coursesTable = new dynamodb.Table(this, 'CoursesTable', {
-      tableName: 'Courses',
-      partitionKey: { name: 'courseId', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-    });
 
-    const transactionsTable = new dynamodb.Table(this, 'TransactionsTable', {
-      tableName: 'Transactions',
-      partitionKey: { name: 'transactionId', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-    });
+      // 1. Create Lambda function
+      const backendLambda = new lambda.Function(this, 'LmsExpressLambda', {
+        runtime: lambda.Runtime.NODEJS_20_X,
+        handler: 'index.handler',
+        code: lambda.Code.fromAsset(
+          // Path to your compiled code (assuming `dist/index.js`).
+          path.join(__dirname, '../../server/dist')
+        ),
+        environment: {
+          // Set your environment variables here
+          // For production, consider using Secrets Manager or Parameter Store
+          NODE_ENV: 'production', // or "development"
+          S3_BUCKET_NAME: 'learning-management-system-s3',
+          CLOUDFRONT_DOMAIN: 'https://d1j25vaoxhur7i.cloudfront.net',
+          STRIPE_SECRET_KEY: 'sk_test_51QWhSCE2CXYEEYdEYO3TotOgf6FkyNKaqCBFymdyF418d0h9QCiw6lAzVAyCXo5MWsunNBxhhzJRjQE1dsqptVBi00ay5MIX8Z',
+          CLERK_PUBLISHABLE_KEY: 'pk_test_cXVhbGl0eS1oYXJlLTUuY2xlcmsuYWNjb3VudHMuZGV2JA',
+          CLERK_SECRET_KEY: 'sk_test_o7htYSuFn3KR3kCoMtoykBfsc2xnzxFn4lHCV0fLTV',
+        }
+      });
 
-    const userCourseProgressTable = new dynamodb.Table(this, 'UserCourseProgressTable', {
-      tableName: 'UserCourseProgress',
-      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
-      sortKey: { name: 'courseId', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-    });
-    */
+      // 2. Grant DynamoDB Permissions
+      // Option A: Attach an AWS-managed policy with broad permissions
+      backendLambda.role?.addManagedPolicy(
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonDynamoDBFullAccess')
+      );
 
-    // ===================== S3 Bucket ===================== //
-    const videoBucket = new s3.Bucket(this, 'VideoBucket', {
-      bucketName: 'lms-video-bucket',
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-    });
 
-    // ===================== CloudFront Distribution ===================== //
-    const distribution = new cloudfront.CloudFrontWebDistribution(this, 'VideoDistribution', {
-      originConfigs: [
-        {
-          s3OriginSource: {
-            s3BucketSource: videoBucket,
-          },
-          behaviors: [{ isDefaultBehavior: true }],
+      // 2. Create an API Gateway to proxy all requests to the Lambda
+      const backendApi = new apigateway.LambdaRestApi(this, 'LmsApiGateway', {
+        handler: backendLambda,
+        // If you want to configure custom domain, logging, etc.,
+        // you can do so here. By default it will create a new API
+        // with a proxy integration for your Lambda.
+        proxy: true,
+        deployOptions: {
+          stageName: 'dev', // e.g. /dev
         },
-      ],
-    });
+      });
 
-    // ===================== CloudFront Origin Access Control (OAC) ===================== //
-    const oac = new cloudfront.CfnOriginAccessControl(this, 'VideoBucketOAC', {
-      originAccessControlConfig: {
-        name: 'VideoBucketOAC',
-        description: 'OAC for S3 bucket access',
-        originAccessControlOriginType: 's3',
-        signingBehavior: 'always',
-        signingProtocol: 'sigv4',
-      },
-    });
-
-    // Attach the OAC to the origin in the distribution
-    const cfnDistribution = distribution.node.defaultChild as cloudfront.CfnDistribution;
-    cfnDistribution.addPropertyOverride(
-      'DistributionConfig.Origins.0.OriginAccessControlId',
-      oac.attrId
-    );
-
-    // ===================== Lambda Function Using ECR ===================== //
-    const ecrRepository = ecr.Repository.fromRepositoryName(this, 'LmsEcrRepository', 'lms-ecr');
-
-    const lmsBackendLambda = new lambda.DockerImageFunction(this, 'LMSLambdaFunction', {
-      functionName: 'lms-lambda',
-      code: lambda.DockerImageCode.fromEcr(ecrRepository, {
-        tagOrDigest: 'latest',
-      }),
-      memorySize: 1024,
-      timeout: cdk.Duration.minutes(5),
-      environment: {
-        NODE_ENV: 'production',
-        STRIPE_SECRET_KEY: 'sk_test_51QWhSCE2CXYEEYdEYO3TotOgf6FkyNKaqCBFymdyF418d0h9QCiw6lAzVAyCXo5MWsunNBxhhzJRjQE1dsqptVBi00ay5MIX8Z',
-        CLERK_PUBLISHABLE_KEY: 'pk_test_cXVhbGl0eS1oYXJlLTUuY2xlcmsuYWNjb3VudHMuZGV2JA',
-        CLERK_SECRET_KEY: 'sk_test_o7htYSuFn3KR3kCoMtoykBfsc2xnzxFn4lHCV0fLTV',
-        S3_BUCKET_NAME: 'lms-video-bucket',
-      },
-    });
-
-    // Grant Lambda permissions to pull from the ECR repository
-    ecrRepository.grantPull(lmsBackendLambda.role!);
+      // 3. Output the API endpoint
+      new cdk.CfnOutput(this, 'LmsApiUrl', {
+        value: backendApi.url,
+        description: 'The base URL of the LMS backend API',
+      });
+    }
 
 
-
-    // Grant Lambda permissions to read/write to the DynamoDB table
-  //  coursesTable.grantReadWriteData(lmsBackendLambda);
-  //  transactionsTable.grantReadWriteData(lmsBackendLambda);
-  //  userCourseProgressTable.grantReadWriteData(lmsBackendLambda);
-
-    // ===================== API Gateway - Proxy Integration ===================== //
-    const api = new apigateway.RestApi(this, 'LMSApiGateway', {
-      restApiName: 'lm_api_gateway',
-      description: 'API Gateway for LMS Backend using Lambda Proxy',
-      deployOptions: {
-        stageName: 'prod',
-      },
-    });
-
-    const proxyResource = api.root.addResource('{proxy+}');
-    proxyResource.addMethod('ANY', new apigateway.LambdaIntegration(lmsBackendLambda));
-
-    // ===================== Outputs ===================== //
-    new cdk.CfnOutput(this, 'ApiGatewayURL', { value: api.url });
-  //  new cdk.CfnOutput(this, 'CoursesTableName', { value: coursesTable.tableName });
-    new cdk.CfnOutput(this, 'VideoBucketName', { value: videoBucket.bucketName });
-    new cdk.CfnOutput(this, 'CloudFrontURL', { value: distribution.distributionDomainName });
-  }
 }
 
 
