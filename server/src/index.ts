@@ -1,4 +1,3 @@
-// Importing required modules and libraries
 import express from "express";
 import dotenv from "dotenv"; // dotenv is used to load environment variables from a .env file into process.env.
 import bodyParser from "body-parser"; // Middleware for parsing request bodies.

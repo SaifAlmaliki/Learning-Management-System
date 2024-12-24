@@ -36,7 +36,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = exports.clerkClient = void 0;
-// Importing required modules and libraries
 const express_1 = __importDefault(require("express"));
 const dotenv_1 = __importDefault(require("dotenv")); // dotenv is used to load environment variables from a .env file into process.env.
 const body_parser_1 = __importDefault(require("body-parser")); // Middleware for parsing request bodies.
