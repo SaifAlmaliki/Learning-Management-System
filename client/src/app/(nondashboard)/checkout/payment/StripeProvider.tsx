@@ -12,7 +12,7 @@ import Loading from "@/components/Loading"; // Loading spinner component
 
 // Ensure the public Stripe key is defined in environment variables
 if (!process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY) {
-  throw new Error("NEXT_PUBLIC_STRIPE_PUBLIC_KEY is not set");
+  throw new Error("STRIPE_SECRET_KEYis not set");
 }
 
 // Initialize Stripe with the public key
