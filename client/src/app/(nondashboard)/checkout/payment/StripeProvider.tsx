@@ -11,12 +11,12 @@ import { useCurrentCourse } from "@/hooks/useCurrentCourse"; // Hook to fetch cu
 import Loading from "@/components/Loading"; // Loading spinner component
 
 // Ensure the public Stripe key is defined in environment variables
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error("STRIPE_SECRET_KEY is not set");
+if (!process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY) {
+  throw new Error("NEXT_PUBLIC_STRIPE_PUBLIC_KEY is not set");
 }
 
 // Initialize Stripe with the public key
-const stripePromise = loadStripe(process.env.STRIPE_SECRET_KEY);
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY);
 
 // Custom appearance options for Stripe Elements
 const appearance: Appearance = {
