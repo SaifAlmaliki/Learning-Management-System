@@ -1,71 +1,100 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import * as s3 from 'aws-cdk-lib/aws-s3';
-import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
-import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { BackendLambda } from './constructs/backend-lambda';
+import { LmsS3Bucket } from './constructs/s3-bucket';
+import { LmsCloudFrontDistribution } from './constructs/cloudfront-distribution';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
-import * as ecr from 'aws-cdk-lib/aws-ecr';
-import * as iam from 'aws-cdk-lib/aws-iam';
-import * as path from 'path';
-import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
+import * as dotenv from 'dotenv';
 
-export class AwsCdkLmsStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, props);
+// Load environment variables from .env file
+dotenv.config();
 
-    // ===================== Add Global Tag ===================== //
-    cdk.Tags.of(this).add('Project', 'learning-management-system');
-
-      // 1. Create Lambda function
-      const backendLambda = new lambda.Function(this, 'LmsExpressLambda', {
-        functionName: 'lms-express-lambda',
-        runtime: lambda.Runtime.NODEJS_20_X,
-        handler: 'index.handler',
-        timeout: cdk.Duration.seconds(30),
-        code: lambda.Code.fromAsset(
-          // Path to your compiled code (assuming `dist/index.js`).
-          path.join(__dirname, '../../server/dist')
-        ),
-        environment: {
-          // Set your environment variables here
-          // For production, consider using Secrets Manager or Parameter Store
-          NODE_ENV: 'production', // or "development"
-          S3_BUCKET_NAME: 'learning-management-system-s3',
-          CLOUDFRONT_DOMAIN: 'https://d1j25vaoxhur7i.cloudfront.net',
-          STRIPE_SECRET_KEY: 'sk_test_51QWhSCE2CXYEEYdEYO3TotOgf6FkyNKaqCBFymdyF418d0h9QCiw6lAzVAyCXo5MWsunNBxhhzJRjQE1dsqptVBi00ay5MIX8Z',
-          CLERK_PUBLISHABLE_KEY: 'pk_test_cXVhbGl0eS1oYXJlLTUuY2xlcmsuYWNjb3VudHMuZGV2JA',
-          CLERK_SECRET_KEY: 'sk_test_o7htYSuFn3KR3kCoMtoykBfsc2xnzxFn4lHCV0fLTV',
-        }
-      });
-
-      // 2. Grant DynamoDB Permissions
-      // Option A: Attach an AWS-managed policy with broad permissions
-      backendLambda.role?.addManagedPolicy(
-        iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonDynamoDBFullAccess')
-      );
-
-
-      // 2. Create an API Gateway to proxy all requests to the Lambda
-      const backendApi = new apigateway.LambdaRestApi(this, 'LmsApiGateway', {
-        restApiName: 'lms-backend-api',
-        handler: backendLambda,
-        proxy: true,
-        deployOptions: {
-          stageName: 'dev',
-          description: 'Development Stage for the LMS Backend',
-        },
-      });
-
-      // 3. Output the API endpoint
-      new cdk.CfnOutput(this, 'LmsApiUrl', {
-        value: backendApi.url,
-        description: 'The base URL of the LMS backend API',
-      });
-    }
-
-
+// Define a custom interface for the stack props
+export interface AwsCdkLmsStackProps extends cdk.StackProps {
+  certificate: acm.Certificate; // Add certificate property
 }
 
+export class AwsCdkLmsStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props: AwsCdkLmsStackProps) {
+    super(scope, id, {
+      ...props,
+      crossRegionReferences: props.crossRegionReferences, // Enable cross-region references
+    });
 
+    // Add Global Tag
+    cdk.Tags.of(this).add('Project', 'learning-management-system');
+
+    // 1. Create S3 Bucket
+    const s3Bucket = new LmsS3Bucket(this, 'LmsS3Bucket');
+
+    // 2. Create CloudFront Distribution
+    const cloudFrontDistribution = new LmsCloudFrontDistribution(this, 'LmsCloudFrontDistribution', {
+      s3Bucket: s3Bucket.bucket,
+    });
+
+    // 3. Retrieve sensitive environment variables from .env file
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    const clerkPublishableKey = process.env.CLERK_PUBLISHABLE_KEY;
+    const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+
+    if (!stripeSecretKey || !clerkPublishableKey || !clerkSecretKey) {
+      throw new Error('Missing required environment variables in .env file');
+    }
+
+    // 4. Create the Lambda function
+    const backendLambda = new BackendLambda(this, 'BackendLambda', {
+      s3BucketName: s3Bucket.bucket.bucketName,
+      cloudFrontDomain: cloudFrontDistribution.distribution.distributionDomainName,
+      stripeSecretKey,
+      clerkPublishableKey,
+      clerkSecretKey,
+    });
+
+    // 5. Create an API Gateway to proxy all requests to the Lambda
+    const backendApi = new apigateway.LambdaRestApi(this, 'LmsApiGateway', {
+      restApiName: 'lms-api-gw',
+      handler: backendLambda.lambdaFunction,
+      proxy: true,
+      deployOptions: {
+        stageName: 'dev',
+        description: 'Development Stage for the LMS Backend',
+      },
+    });
+
+    // 6. Set up a custom domain for the API Gateway
+    const domainName = 'learning.cognitechx.com'; // Subdomain for API Gateway
+
+    // Look up the hosted zone within the stack scope
+    const hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
+      domainName: 'cognitechx.com', // Your root domain
+    });
+
+    // 7. Create the custom domain for API Gateway
+    const apiDomain = new apigateway.DomainName(this, 'ApiGatewayDomain', {
+      domainName: domainName,
+      certificate: props.certificate, // Use the certificate passed as a prop
+      endpointType: apigateway.EndpointType.EDGE, // Use Edge-optimized endpoint
+    });
+
+    // 8. Map the custom domain to the API Gateway
+    apiDomain.addBasePathMapping(backendApi, {
+      stage: backendApi.deploymentStage, // Map to the 'dev' stage
+    });
+
+    // 9. Create a Route 53 record to point to the API Gateway custom domain
+    new route53.ARecord(this, 'ApiGatewayAliasRecord', {
+      zone: hostedZone, // Use the hosted zone looked up in this stack
+      recordName: domainName,
+      target: route53.RecordTarget.fromAlias(new route53Targets.ApiGatewayDomain(apiDomain)),
+    });
+
+    // 10. Output the custom API endpoint
+    new cdk.CfnOutput(this, 'LmsApiUrl', {
+      value: `https://${domainName}/dev`, // Use the custom domain
+      description: 'The base URL of the LMS backend API',
+    });
+  }
+}
