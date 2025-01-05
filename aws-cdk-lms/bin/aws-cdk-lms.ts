@@ -14,7 +14,7 @@ const env = {
 
 // Deploy the CertificateStack in us-east-1
 const certificateStack = new CertificateStack(app, 'CertificateStack', {
-  domainName: 'learning.cognitechx.com', // Pass the domain name to the CertificateStack
+  domainName: 'academyapi.cognitechx.com', // Pass the domain name to the CertificateStack
   env: {
     account: env.account,
     region: 'us-east-1', // Certificate must be in us-east-1

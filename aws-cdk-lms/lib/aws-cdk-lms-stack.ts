@@ -65,7 +65,7 @@ export class AwsCdkLmsStack extends cdk.Stack {
     });
 
     // 6. Set up a custom domain for the API Gateway
-    const domainName = 'learning.cognitechx.com'; // Subdomain for API Gateway
+    const domainName = 'academyapi.cognitechx.com'; // Subdomain for API Gateway
 
     // Look up the hosted zone within the stack scope
     const hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {

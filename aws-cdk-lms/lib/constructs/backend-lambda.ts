@@ -23,7 +23,7 @@ export class BackendLambda extends Construct {
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: 'index.handler',
       timeout: cdk.Duration.seconds(30),
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../../server/dist')),
+      code: lambda.Code.fromAsset(path.join(__dirname, '../../../server/src')),
       environment: {
         NODE_ENV: 'production',
         S3_BUCKET_NAME: props.s3BucketName,
