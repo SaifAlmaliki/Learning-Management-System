@@ -2,12 +2,15 @@
   "name": "server",
   "version": "1.0.0",
   "main": "index.js",
-  "scripts": {
-    "build": "rimraf dist && npx tsc && cpx \"src/seed/data/**/*\" dist/seed/data",
-    "start": "npm run build && node dist/index.js",
-    "dev": "npm run build && concurrently \"npx tsc -w\" \"nodemon --exec ts-node src/index.ts\"",
-    "seed": "ts-node src/seed/seedDynamodb.ts"
-  },
+"scripts": {
+  "clean": "npx rimraf dist",
+  "copy:node_modules": "cpx \"node_modules/**/*\" dist/node_modules",
+  "copy:seed": "cpx \"src/seed/data/**/*\" dist/seed/data",
+  "build": "npm run clean && npx tsc && npm run copy:node_modules && npm run copy:seed",
+  "start": "npm run build && node dist/index.js",
+  "dev": "npm run build && concurrently \"npx tsc -w\" \"nodemon --exec ts-node src/index.ts\"",
+  "seed": "ts-node src/seed/seedDynamodb.ts"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
