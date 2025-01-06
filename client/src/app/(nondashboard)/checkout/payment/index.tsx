@@ -16,6 +16,9 @@ import { CreditCard } from "lucide-react"; // Icon for credit card payment
 import { Button } from "@/components/ui/button"; // Reusable button component
 import { toast } from "sonner"; // Notification library for showing success/error messages
 import { Transaction } from "@/types";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // PaymentPageContent Component: Contains the main content and payment logic
 const PaymentPageContent = () => {
