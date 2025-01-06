@@ -25,7 +25,7 @@ export class AwsCdkLmsStack extends cdk.Stack {
     });
 
     // Add Global Tag
-    cdk.Tags.of(this).add('Project', 'learning-management-system');
+    cdk.Tags.of(this).add('Project', 'cognitechx academy');
 
     // 1. Create S3 Bucket
     const s3Bucket = new LmsS3Bucket(this, 'LmsS3Bucket');
@@ -81,6 +81,7 @@ export class AwsCdkLmsStack extends cdk.Stack {
 
     // 8. Map the custom domain to the API Gateway
     apiDomain.addBasePathMapping(backendApi, {
+      basePath: 'dev',  // Explicitly map the '/dev' path
       stage: backendApi.deploymentStage, // Map to the 'dev' stage
     });
 

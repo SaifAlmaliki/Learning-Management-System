@@ -51,11 +51,13 @@ app.get("/", (req, res) => {
   res.send("Hello World");
 });
 
-// Register route modules with their respective paths.
-app.use("/courses", courseRoutes); // Routes for course-related operations.
-app.use("/users/clerk", requireAuth(), userClerkRoutes); // User-related routes with authentication required.
-app.use("/transactions", requireAuth(), transactionRoutes); // Transaction routes with authentication required.
-app.use("/users/course-progress", requireAuth(), userCourseProgressRoutes); // Routes for tracking course progress with authentication required.
+// Apply Clerk middleware only to routes that require authentication
+app.use('/users/clerk', clerkMiddleware(), userClerkRoutes); // Protected routes
+app.use('/transactions', clerkMiddleware(), transactionRoutes); // Protected routes
+app.use('/users/course-progress', clerkMiddleware(), userCourseProgressRoutes); // Protected routes
+
+// Public routes (no Clerk middleware)
+app.use('/courses', courseRoutes); // Public route
 
 /* SERVER */
 // Define the server port from the environment variable or default to 3000.
