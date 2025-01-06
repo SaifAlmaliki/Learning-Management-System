@@ -77,7 +77,7 @@ const AppSidebar = () => {
                 {/* App Logo */}
                 <div className="app-sidebar__logo-wrapper">
                   <Image src="/logo.svg" alt="logo" width={25} height={20} className="app-sidebar__logo"/>
-                  <p className="app-sidebar__title">cognitechX</p>
+                  <p className="app-sidebar__title">CognitechX</p>
                 </div>
                 {/* Sidebar Toggle Icon */}
                 <PanelLeft className="app-sidebar__collapse-icon" />
