@@ -52,6 +52,9 @@ const PaymentPageContent = () => {
       ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
       : undefined;
 
+    console.log("Base URL:", baseUrl); // Log the base URL
+    console.log("Return URL:", `${baseUrl}/checkout?step=3&id=${courseId}`); // Log the return URL
+
     // Stripe confirm payment with redirect URL
     const result = await stripe.confirmPayment({
       elements,
