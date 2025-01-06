@@ -1,14 +1,9 @@
-// File: StripeProvider.tsx
-// Purpose: This component sets up the Stripe Elements context for secure payment processing.
-// It fetches a `clientSecret` from the backend by creating a payment intent using Stripe's API
-// and configures the appearance of Stripe Elements. It ensures the Stripe context is available to child components.
-
 import React, { useEffect, useState } from "react";
-import { Elements } from "@stripe/react-stripe-js"; // Provides Stripe context
-import { loadStripe, StripeElementsOptions, Appearance } from "@stripe/stripe-js"; // Stripe SDK
-import { useCreateStripePaymentIntentMutation } from "@/state/api"; // API hook to create a Stripe payment intent
-import { useCurrentCourse } from "@/hooks/useCurrentCourse"; // Hook to fetch current course data
-import Loading from "@/components/Loading"; // Loading spinner component
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe, StripeElementsOptions, Appearance } from "@stripe/stripe-js";
+import { useCreateStripePaymentIntentMutation } from "@/state/api";
+import { useCurrentCourse } from "@/hooks/useCurrentCourse";
+import Loading from "@/components/Loading";
 
 // Ensure the public Stripe key is defined in environment variables
 if (!process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY) {
@@ -40,9 +35,9 @@ const appearance: Appearance = {
  * - Configures and provides the Stripe Elements context to its children.
  */
 const StripeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [clientSecret, setClientSecret] = useState<string | "">("");          // Holds the payment intent clientSecret
-  const [createStripePaymentIntent] = useCreateStripePaymentIntentMutation(); // API hook to fetch clientSecret
-  const { course } = useCurrentCourse(); // Fetch course data (includes price)
+  const [clientSecret, setClientSecret] = useState<string | "">("");
+  const [createStripePaymentIntent] = useCreateStripePaymentIntentMutation();
+  const { course } = useCurrentCourse();
 
   useEffect(() => {
     // Exit if no course data is available
@@ -55,7 +50,7 @@ const StripeProvider = ({ children }: { children: React.ReactNode }) => {
           amount: course?.price ?? 9999999999999, // Default to high value if price is unavailable
         }).unwrap();
 
-        setClientSecret(result.clientSecret);     // Set clientSecret for Stripe Elements
+        setClientSecret(result.clientSecret); // Set clientSecret for Stripe Elements
       } catch (error) {
         console.error("Failed to fetch payment intent:", error);
       }
@@ -76,7 +71,9 @@ const StripeProvider = ({ children }: { children: React.ReactNode }) => {
   // Wrap children with Stripe Elements context
   return (
     <Elements stripe={stripePromise} options={options} key={clientSecret}>
-      {children}
+      <div> {/* Wrap children in a single parent */}
+        {children}
+      </div>
     </Elements>
   );
 };
