@@ -53,10 +53,12 @@ const StripeProvider = ({ children }: { children: React.ReactNode }) => {
     appearance,
   };
 
-  if (!clientSecret) return <Loading />;
+  if (!clientSecret) {
+    return <Loading />;
+  }
 
   return (
-    <Elements stripe={stripePromise} options={options} key={clientSecret}>
+    <Elements stripe={stripePromise} options={options}>
       {children}
     </Elements>
   );
