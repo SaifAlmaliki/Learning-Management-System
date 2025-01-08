@@ -36,8 +36,11 @@ const NonDashboardNavbar = () => {
           {/* Section for the brand and search functionality. */}
 
           <Link href="/" className="nondashboard-navbar__brand" scroll={false}>
-            {/* Logo/brand link pointing to the home page. */}
-            CognitechX Academy
+            {/* Logo/brand link with two-line modern styling */}
+            <div className="brand-text">
+              <div className="brand-text__top">Academy</div>
+              <div className="brand-text__bottom">CognitechX</div>
+            </div>
           </Link>
 
           <div className="flex items-center gap-4">

@@ -487,7 +487,7 @@ input[type="color"] {
 }
 
 .billing__select-item {
-  @apply hover:!bg-white-50 hover:!text-customgreys-primarybg cursor-pointer;
+  @apply cursor-pointer hover:!bg-white-50 hover:!text-customgreys-darkGrey;
 }
 
 .billing__grid {
@@ -1212,7 +1212,8 @@ input[type="color"] {
 }
 
 .nondashboard-navbar__brand {
-  @apply font-bold text-lg sm:text-xl hover:text-customgreys-dirtyGrey;
+  text-decoration: none;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
 }
 
 .nondashboard-navbar__search-input {
@@ -1247,15 +1248,113 @@ input[type="color"] {
   @apply bg-indigo-600 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md hover:bg-primary-600 hover:text-customgreys-primarybg text-sm sm:text-base;
 }
 
-/* Add these classes for group hover effects */
-.group:hover .dashboard-navbar__search-icon,
-.group:hover .nondashboard-navbar__search-icon {
-  @apply text-white-50;
+/* Dashboard Navbar */
+.dashboard-navbar {
+  @apply w-full mb-6 px-4 sm:px-8 pt-7 z-10;
 }
 
-.group:hover .dashboard-navbar__search-input,
-.group:hover .nondashboard-navbar__search-input {
-  @apply bg-customgreys-darkerGrey text-white-50;
+.dashboard-navbar__container {
+  @apply flex justify-between items-center w-full my-3;
+}
+
+.dashboard-navbar__search {
+  @apply flex justify-between items-center gap-2 sm:gap-5;
+}
+
+.dashboard-navbar__search-input {
+  @apply bg-customgreys-primarybg pl-10 sm:pl-14 pr-6 sm:pr-20 py-3 sm:py-4 rounded-xl text-customgreys-dirtyGrey hover:text-white-50 hover:bg-customgreys-darkerGrey transition-all duration-300 text-sm sm:text-base;
+}
+
+.dashboard-navbar__search-icon {
+  @apply absolute left-3 sm:left-5 top-1/2 transform -translate-y-1/2 text-customgreys-dirtyGrey transition-all duration-300;
+}
+
+.dashboard-navbar__actions {
+  @apply flex items-center gap-3 sm:gap-6;
+}
+
+.dashboard-navbar__dark-mode-button {
+  @apply rounded-full flex items-center justify-center;
+}
+
+.dashboard-navbar__dark-mode-icon {
+  @apply cursor-pointer text-customgreys-dirtyGrey w-5 h-5 sm:w-6 sm:h-6 hover:text-white-50;
+}
+
+.dashboard-navbar__sidebar-trigger {
+  @apply text-customgreys-dirtyGrey hover:text-white-50 transition-colors;
+}
+
+/* AppSidebar */
+.app-sidebar__menu {
+  @apply mt-5 group-data-[collapsible=icon]:mt-7;
+}
+
+.app-sidebar__logo-wrapper {
+  @apply flex items-center gap-5;
+}
+
+.app-sidebar__logo {
+  @apply transition duration-200 group-data-[collapsible=icon]:group-hover:brightness-75 w-auto;
+}
+
+.app-sidebar__title {
+  @apply text-lg font-extrabold group-data-[collapsible=icon]:hidden;
+}
+
+.app-sidebar__collapse-icon {
+  @apply text-gray-400 w-5 h-5 group-data-[collapsible=icon]:hidden;
+}
+
+.app-sidebar__nav-menu {
+  @apply mt-7 gap-0;
+}
+
+.app-sidebar__nav-item {
+  @apply group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:py-4 hover:bg-customgreys-secondarybg;
+}
+
+.app-sidebar__nav-button {
+  @apply gap-4 p-8 hover:bg-customgreys-secondarybg group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center;
+}
+
+.app-sidebar__nav-link {
+  @apply relative flex items-center;
+}
+
+.app-sidebar__nav-text {
+  @apply font-medium text-md ml-4 group-data-[collapsible=icon]:hidden;
+}
+
+.app-sidebar__active-indicator {
+  @apply absolute right-0 top-0 h-full w-[4px] bg-primary-750;
+}
+
+.app-sidebar__signout {
+  @apply text-primary-700 pl-8;
+}
+
+/* NonDashboard Layout */
+.nondashboard-layout {
+  @apply flex flex-col min-h-screen w-full;
+}
+
+.nondashboard-layout__main {
+  @apply flex flex-grow w-full h-full justify-center items-center;
+}
+
+/* Auth Layout */
+.auth-layout {
+  @apply h-full w-full bg-customgreys-primarybg;
+}
+
+.auth-layout__main {
+  @apply w-full flex h-full justify-center items-center;
+}
+
+/* Root Layout */
+.root-layout {
+  @apply mx-auto w-full h-full justify-center items-center;
 }
 
 /* Shared Notification Settings */
@@ -1380,152 +1479,4 @@ input[type="color"] {
 
 .add-chapter-button__text {
   @apply text-primary-700;
-}
-
-/* AppSidebar */
-.app-sidebar__menu {
-  @apply mt-5 group-data-[collapsible=icon]:mt-7;
-}
-
-.app-sidebar__logo-container {
-  @apply flex justify-between items-center gap-5 pl-3 pr-1 h-10 w-full group-data-[collapsible=icon]:ml-1 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:px-0;
-}
-
-.app-sidebar__logo-wrapper {
-  @apply flex items-center gap-5;
-}
-
-.app-sidebar__logo {
-  @apply transition duration-200 group-data-[collapsible=icon]:group-hover:brightness-75 w-auto;
-}
-
-.app-sidebar__title {
-  @apply text-lg font-extrabold group-data-[collapsible=icon]:hidden;
-}
-
-.app-sidebar__collapse-icon {
-  @apply text-gray-400 w-5 h-5 group-data-[collapsible=icon]:hidden;
-}
-
-.app-sidebar__nav-menu {
-  @apply mt-7 gap-0;
-}
-
-.app-sidebar__nav-item {
-  @apply group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:py-4 hover:bg-customgreys-secondarybg;
-}
-
-.app-sidebar__nav-button {
-  @apply gap-4 p-8 hover:bg-customgreys-secondarybg group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center;
-}
-
-.app-sidebar__nav-link {
-  @apply relative flex items-center;
-}
-
-.app-sidebar__nav-text {
-  @apply font-medium text-md ml-4 group-data-[collapsible=icon]:hidden;
-}
-
-.app-sidebar__active-indicator {
-  @apply absolute right-0 top-0 h-full w-[4px] bg-primary-750;
-}
-
-.app-sidebar__signout {
-  @apply text-primary-700 pl-8;
-}
-
-/* NonDashboard Layout */
-.nondashboard-layout {
-  @apply flex flex-col min-h-screen w-full;
-}
-
-.nondashboard-layout__main {
-  @apply flex flex-grow w-full h-full justify-center items-center;
-}
-
-/* Auth Layout */
-.auth-layout {
-  @apply h-full w-full bg-customgreys-primarybg;
-}
-
-.auth-layout__main {
-  @apply w-full flex h-full justify-center items-center;
-}
-
-/* Root Layout */
-.root-layout {
-  @apply mx-auto w-full h-full justify-center items-center;
-}
-
-/* Add this class for group hover effect */
-.group .course-card__image {
-  @apply hover:scale-105 w-auto;
-}
-
-/* Add this class for group hover effect */
-.group .course-card-search__image {
-  @apply hover:scale-105 w-auto;
-}
-
-/* Add this class for group hover effect */
-.group .course-card-teacher__image {
-  @apply hover:scale-105 w-auto;
-}
-
-/* Add these classes for group hover effects */
-.group:hover .navbar__search-icon {
-  @apply text-white-50;
-}
-
-.group:hover .navbar__search-input {
-  @apply bg-customgreys-darkerGrey text-white-50;
-}
-
-/* Add these classes for group hover effects */
-.group:hover .add-chapter-button__icon,
-.group:hover .add-chapter-button__text {
-  @apply text-white-100;
-}
-
-/* Add this class for group hover effect */
-[data-collapsible="icon"] .group:hover .app-sidebar__logo {
-  @apply brightness-75;
-}
-
-/* Dashboard Navbar */
-.dashboard-navbar {
-  @apply w-full mb-6 px-4 sm:px-8 pt-7 z-10;
-}
-
-.dashboard-navbar__container {
-  @apply flex justify-between items-center w-full my-3;
-}
-
-.dashboard-navbar__search {
-  @apply flex justify-between items-center gap-2 sm:gap-5;
-}
-
-.dashboard-navbar__search-input {
-  @apply bg-customgreys-primarybg pl-10 sm:pl-14 pr-6 sm:pr-20 py-3 sm:py-4 rounded-xl text-customgreys-dirtyGrey hover:text-white-50 hover:bg-customgreys-darkerGrey transition-all duration-300 text-sm sm:text-base;
-}
-
-.dashboard-navbar__search-icon {
-  @apply absolute left-3 sm:left-5 top-1/2 transform -translate-y-1/2 text-customgreys-dirtyGrey transition-all duration-300;
-}
-
-.dashboard-navbar__actions {
-  @apply flex items-center gap-3 sm:gap-6;
-}
-
-.dashboard-navbar__dark-mode-button {
-  @apply rounded-full flex items-center justify-center;
-}
-
-.dashboard-navbar__dark-mode-icon {
-  @apply cursor-pointer text-customgreys-dirtyGrey w-5 h-5 sm:w-6 sm:h-6 hover:text-white-50;
-}
-
-.dashboard-navbar__sidebar-trigger {
-  @apply text-customgreys-dirtyGrey hover:text-white-50 transition-colors;
 }
