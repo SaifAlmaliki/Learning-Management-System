@@ -1,6 +1,8 @@
+# Create IAM role for Lambda execution
 resource "aws_iam_role" "lambda_role" {
   name = "lms_lambda_role_${var.environment}"
 
+  # Trust policy allowing Lambda service to assume this role
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -15,17 +17,18 @@ resource "aws_iam_role" "lambda_role" {
   })
 }
 
-# Attach DynamoDB policy
+# Attach DynamoDB full access policy to Lambda role
 resource "aws_iam_role_policy_attachment" "dynamodb_policy" {
   role       = aws_iam_role.lambda_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
 }
 
-# S3 access policy
+# Create S3 access policy for Lambda
 resource "aws_iam_role_policy" "s3_policy" {
   name = "lms-lambda-s3-policy-${var.environment}"
   role = aws_iam_role.lambda_role.id
 
+  # Policy allowing S3 operations on the LMS bucket
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -48,30 +51,20 @@ resource "aws_iam_role_policy" "s3_policy" {
   })
 }
 
-# CloudWatch Logs policy
+# Attach CloudWatch Logs policy for Lambda logging
 resource "aws_iam_role_policy_attachment" "lambda_logs" {
   role       = aws_iam_role.lambda_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-# Load environment variables from .env file
-data "local_file" "env" {
-  filename = "${path.root}/.env"
-}
-
-locals {
-  env_vars = { for line in split("\n", data.local_file.env.content) :
-    split("=", line)[0] => split("=", line)[1] if length(split("=", line)) == 2
-  }
-}
-
-# Create ZIP file from the Lambda source code
+# Create ZIP archive from Lambda source code
 data "archive_file" "lambda_zip" {
   type        = "zip"
   source_dir  = "${path.root}/../../../server/dist"
   output_path = "${path.module}/lambda.zip"
 }
 
+# Create Lambda function
 resource "aws_lambda_function" "lms_lambda" {
   filename         = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
@@ -82,6 +75,7 @@ resource "aws_lambda_function" "lms_lambda" {
   timeout         = 30
   memory_size     = 1024
 
+  # Environment variables for the Lambda function
   environment {
     variables = {
       NODE_ENV             = "production"

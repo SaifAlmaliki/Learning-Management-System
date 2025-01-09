@@ -1,18 +1,21 @@
 locals {
-  s3_origin_id = "lmsS3Origin"
+  s3_origin_id = "S3-${var.s3_bucket_id}"
 }
 
+# Create CloudFront origin access identity for S3 access
 resource "aws_cloudfront_origin_access_identity" "oai" {
-  comment = "OAI for LMS S3 bucket"
+  comment = "OAI for ${var.environment} environment"
 }
 
+# Create CloudFront distribution
 resource "aws_cloudfront_distribution" "s3_distribution" {
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"
-  price_class         = "PriceClass_100"
+  price_class         = "PriceClass_100"  # Use only North America and Europe edge locations
   http_version        = "http2"
 
+  # Origin configuration for S3
   origin {
     domain_name = var.s3_bucket_domain
     origin_id   = local.s3_origin_id
@@ -22,6 +25,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     }
   }
 
+  # Default cache behavior
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD"]
@@ -34,21 +38,23 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
       }
     }
 
-    viewer_protocol_policy = "redirect-to-https"
+    viewer_protocol_policy = "redirect-to-https"  # Force HTTPS
     min_ttl                = 0
-    default_ttl            = 3600
-    max_ttl                = 86400
+    default_ttl            = 3600  # 1 hour
+    max_ttl                = 86400 # 24 hours
     compress               = true
   }
 
-  viewer_certificate {
-    cloudfront_default_certificate = true
-  }
-
+  # Viewer restrictions
   restrictions {
     geo_restriction {
       restriction_type = "none"
     }
+  }
+
+  # SSL certificate configuration
+  viewer_certificate {
+    cloudfront_default_certificate = true  # Use default CloudFront certificate
   }
 
   tags = {
