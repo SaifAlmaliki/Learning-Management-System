@@ -23,5 +23,5 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-# Environment files
-.env
+# Zip files
+*.zip

@@ -38,10 +38,10 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
       }
     }
 
-    viewer_protocol_policy = "redirect-to-https"  # Force HTTPS
+    viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
-    default_ttl            = 3600  # 1 hour
-    max_ttl                = 86400 # 24 hours
+    default_ttl            = 86400    # Default is 24 hours
+    max_ttl                = 31536000 # Default is 365 days
     compress               = true
   }
 
