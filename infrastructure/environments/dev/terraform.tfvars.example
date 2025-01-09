@@ -1,0 +1,13 @@
+# Environment
+environment = "dev"
+
+# Domain configuration
+domain_name     = "example.com"
+api_domain_name = "api.example.com"
+
+# AWS Configuration
+aws_region = "eu-central-1"
+
+# Add any other variables here
+# stripe_key = "your-stripe-key"
+# clerk_key  = "your-clerk-key"
