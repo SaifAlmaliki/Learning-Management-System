@@ -101,21 +101,27 @@ const Course = () => {
         <Card className="course__video">
           <CardContent className="course__video-container">
             {currentChapter?.video ? (
-              <ReactPlayer
-                ref={playerRef}
-                url={currentChapter.video as string}
-                controls
-                width="100%"
-                height="100%"
-                onProgress={handleProgress} // Tracks video progress
-                config={{
-                  file: {
-                    attributes: {
-                      controlsList: "nodownload", // Prevent video download
+              <>
+                {console.log('Debug - Video URL:', currentChapter.video)}
+                <ReactPlayer
+                  ref={playerRef}
+                  url={currentChapter.video as string}
+                  controls
+                  width="100%"
+                  height="100%"
+                  onProgress={handleProgress} // Tracks video progress
+                  onError={(error) => console.error('Video Player Error:', error)}
+                  onReady={() => console.log('Video Player Ready')}
+                  config={{
+                    file: {
+                      attributes: {
+                        controlsList: "nodownload", // Prevent video download
+                      },
+                      forceVideo: true,
                     },
-                  },
-                }}
-              />
+                  }}
+                />
+              </>
             ) : (
               <div className="course__no-video">
                 No video available for this chapter.
