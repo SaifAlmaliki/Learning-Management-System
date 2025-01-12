@@ -102,22 +102,28 @@ const Course = () => {
           <CardContent className="course__video-container">
             {currentChapter?.video ? (
               <>
-                {console.log('Debug - Video URL:', currentChapter.video)}
+                {console.log('Debug - Video URL:', `https://${currentChapter.video}`)}
                 <ReactPlayer
                   ref={playerRef}
-                  url={currentChapter.video as string}
+                  url={`https://${currentChapter.video}`}
                   controls
                   width="100%"
                   height="100%"
-                  onProgress={handleProgress} // Tracks video progress
-                  onError={(error) => console.error('Video Player Error:', error)}
+                  onProgress={handleProgress}
+                  onError={(error) => {
+                    console.error('Video Player Error:', error);
+                    console.log('Attempted URL:', `https://${currentChapter.video}`);
+                  }}
                   onReady={() => console.log('Video Player Ready')}
+                  playsinline
                   config={{
                     file: {
                       attributes: {
-                        controlsList: "nodownload", // Prevent video download
+                        controlsList: "nodownload",
+                        crossOrigin: "anonymous",
                       },
                       forceVideo: true,
+                      tracks: [],
                     },
                   }}
                 />
