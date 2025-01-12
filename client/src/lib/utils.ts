@@ -357,7 +357,6 @@ export const createCourseFormData = (
   return formData;
 };
 
-
 /**
  * Uploads all video files for the chapters in the provided sections.
  *
@@ -367,59 +366,58 @@ export const createCourseFormData = (
  *
  * @returns An array of updated sections with uploaded video URLs.
  */
-export const uploadAllVideos = async (localSections: Section[], courseId: string, getUploadVideoUrl: any) => {
-  /**
-   * Step 1: Create a deep copy of `localSections` to avoid mutating the original data.
-   * Each chapter object is shallowly copied to prepare for potential updates.
-   */
-  const updatedSections = localSections.map((section) => ({
-    ...section,
-    chapters: section.chapters.map((chapter) => ({
-      ...chapter,
-    })),
-  }));
+export const uploadAllVideos = async (
+  localSections: Section[],
+  courseId: string,
+  getUploadVideoUrl: any
+) => {
+  console.log("🎬 Starting batch upload process for all videos...");
+  console.log(`📊 Total sections to process: ${localSections.length}`);
 
-  /**
-   * Step 2: Iterate through each section and its chapters.
-   * For each chapter, check if the video is a valid file and upload it.
-   */
-  for (let i = 0; i < updatedSections.length; i++) {
-    for (let j = 0; j < updatedSections[i].chapters.length; j++) {
-      const chapter = updatedSections[i].chapters[j];
+  try {
+    const updatedSections = await Promise.all(
+      localSections.map(async (section) => {
+        console.log(`\n📁 Processing section: ${section.sectionTitle}`);
+        console.log(`📼 Number of chapters in section: ${section.chapters.length}`);
 
-      // Check if the chapter contains a video file of type 'video/mp4'
-      if (chapter.video instanceof File && chapter.video.type === "video/mp4") {
-        try {
-          /**
-           * Step 3: Upload the video using the `uploadVideo` helper function.
-           * Replace the original chapter's video with the uploaded video's URL.
-           */
-          const updatedChapter = await uploadVideo(
-            chapter,
-            courseId,
-            updatedSections[i].sectionId,
-            getUploadVideoUrl
-          );
-          updatedSections[i].chapters[j] = updatedChapter; // Update the chapter
-        } catch (error) {
-          /**
-           * Step 4: Log an error message if video upload fails for a chapter.
-           * The process continues for the remaining videos.
-           */
-          console.error(
-            `Failed to upload video for chapter ${chapter.chapterId}:`,
-            error
-          );
-        }
-      }
-    }
+        const updatedChapters = await Promise.all(
+          section.chapters.map(async (chapter) => {
+            if (chapter.video instanceof File) {
+              console.log(`\n📹 Found video file in chapter: ${chapter.title}`);
+              console.log(`📄 Video file name: ${chapter.video.name}`);
+              console.log(`📦 Video file size: ${(chapter.video.size / (1024 * 1024)).toFixed(2)} MB`);
+
+              try {
+                const updatedChapter = await uploadVideo(
+                  chapter,
+                  courseId,
+                  section.sectionId,
+                  getUploadVideoUrl
+                );
+                return updatedChapter;
+              } catch (error) {
+                console.error(`❌ Error uploading video for chapter: ${chapter.title}`, error);
+                throw error;
+              }
+            }
+            return chapter;
+          })
+        );
+
+        return {
+          ...section,
+          chapters: updatedChapters,
+        };
+      })
+    );
+
+    console.log("\n✅ Batch upload process completed successfully!");
+    return updatedSections;
+  } catch (error) {
+    console.error("❌ Batch upload process failed:", error);
+    throw error;
   }
-
-
-  // Step 5: Return the updated sections with video URLs replaced.
-  return updatedSections;
 };
-
 
 /**
  * Uploads a single video file for a chapter to a pre-signed URL.
@@ -431,49 +429,58 @@ export const uploadAllVideos = async (localSections: Section[], courseId: string
  *
  * @returns The updated chapter object with the uploaded video's URL.
  */
-async function uploadVideo(chapter: Chapter, courseId: string, sectionId: string, getUploadVideoUrl: any) {
-  // Retrieve the video file from the chapter object.
+async function uploadVideo(
+  chapter: Chapter,
+  courseId: string,
+  sectionId: string,
+  getUploadVideoUrl: any
+) {
   const file = chapter.video as File;
+  console.log(`\n🚀 Starting upload process for video: ${file.name}`);
+  console.log(`📊 File details:
+    - Size: ${(file.size / (1024 * 1024)).toFixed(2)} MB
+    - Type: ${file.type}
+    - Chapter: ${chapter.title}
+  `);
 
   try {
-    /**
-     * Step 1: Fetch the pre-signed upload URL and the resulting video URL.
-     * The pre-signed URL allows the video to be uploaded directly to cloud storage.
-     */
+    console.log("1️⃣ Requesting presigned URL from server...");
     const { uploadUrl, videoUrl } = await getUploadVideoUrl({
-      courseId,               // ID of the course
-      sectionId,              // ID of the section
-      chapterId: chapter.chapterId, // ID of the chapter
-      fileName: file.name,    // Name of the video file
-      fileType: file.type,    // Type of the video file (e.g., video/mp4)
+      courseId,
+      sectionId,
+      chapterId: chapter.chapterId,
+      fileName: file.name,
+      fileType: file.type,
     }).unwrap();
+    console.log("✅ Presigned URL received successfully");
 
-    /**
-     * Step 2: Upload the video file to the pre-signed URL using an HTTP PUT request.
-     * The file's content type is set in the request headers to ensure proper handling.
-     */
-    await fetch(uploadUrl, {
+    console.log("2️⃣ Starting file upload to S3...");
+    const uploadStartTime = Date.now();
+
+    const response = await fetch(uploadUrl, {
       method: "PUT",
       headers: {
-        "Content-Type": file.type, // Set the file's MIME type
+        "Content-Type": file.type,
       },
-      body: file, // Video file content to be uploaded
+      body: file,
     });
 
-    // Step 3: Notify the user of a successful upload using a toast notification.
-    toast.success(
-      `Video uploaded successfully for chapter ${chapter.chapterId}`
-    );
+    if (!response.ok) {
+      throw new Error(`Upload failed with status: ${response.status}`);
+    }
 
-    // Step 4: Return the updated chapter object with the uploaded video URL.
+    const uploadDuration = ((Date.now() - uploadStartTime) / 1000).toFixed(2);
+    console.log(`✅ File uploaded successfully
+      - Duration: ${uploadDuration} seconds
+      - Final URL: ${videoUrl}
+    `);
+
+    toast.success(`Video uploaded successfully for chapter ${chapter.title}`);
+
     return { ...chapter, video: videoUrl };
   } catch (error) {
-    // Step 5: Log an error and rethrow it if the upload fails.
-    console.error(
-      `Failed to upload video for chapter ${chapter.chapterId}:`,
-      error
-    );
-    throw error; // Propagate the error to the caller
+    console.error("❌ Upload failed:", error);
+    toast.error(`Failed to upload video for chapter ${chapter.title}`);
+    throw error;
   }
 }
-
