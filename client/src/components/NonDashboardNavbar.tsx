@@ -35,11 +35,15 @@ const NonDashboardNavbar = () => {
         <div className="nondashboard-navbar__search">
           {/* Section for the brand and search functionality. */}
 
-          <Link href="/" className="nondashboard-navbar__brand" scroll={false}>
-            {/* Logo/brand link with two-line modern styling */}
-            <div className="brand-text">
-              <div className="brand-text__top">Academy</div>
-              <div className="brand-text__bottom">CognitechX</div>
+          <Link href="/" className="nondashboard-navbar__brand group" scroll={false}>
+            <div className="brand-text relative transition-all duration-300 ease-in-out transform group-hover:scale-105">
+              <div className="brand-text__top text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent animate-gradient">
+                Academy
+              </div>
+              <div className="brand-text__bottom text-xl font-semibold text-gray-700 group-hover:text-blue-600 transition-colors duration-300">
+                CognitechX
+              </div>
+              <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300 group-hover:w-full"></div>
             </div>
           </Link>
 
