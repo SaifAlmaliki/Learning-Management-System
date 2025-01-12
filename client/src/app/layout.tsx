@@ -7,6 +7,9 @@ import { DM_Sans } from "next/font/google";
 import "./globals.css";
 // Importing global CSS styles for the application.
 
+// collect logs to vercel analytics
+import { SpeedInsights } from "@vercel/speed-insights/next"
+
 import Providers from "./providers";
 // Importing a custom Providers component, likely used to wrap the app with context providers (e.g., Redux, Theme).
 
