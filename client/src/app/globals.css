@@ -1291,15 +1291,19 @@ input[type="color"] {
 }
 
 .app-sidebar__logo-wrapper {
-  @apply flex items-center gap-5;
+  @apply flex items-center gap-2 relative;
 }
 
 .app-sidebar__logo {
-  @apply transition duration-200 group-data-[collapsible=icon]:group-hover:brightness-75 w-auto;
+  @apply w-6 h-6 transition-transform duration-300;
 }
 
 .app-sidebar__title {
-  @apply text-lg font-extrabold group-data-[collapsible=icon]:hidden;
+  @apply text-lg font-bold transition-all duration-300 relative;
+}
+
+.app-sidebar__title span {
+  @apply inline-block;
 }
 
 .app-sidebar__collapse-icon {

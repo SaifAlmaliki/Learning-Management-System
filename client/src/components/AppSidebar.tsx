@@ -74,9 +74,14 @@ const AppSidebar = () => {
                     alt="logo"
                     width={25}
                     height={20}
-                    className="app-sidebar__logo"
+                    className="app-sidebar__logo transition-transform duration-300 group-hover:scale-110"
                   />
-                  <p className="app-sidebar__title">COGNITECHX</p>
+                  <p className="app-sidebar__title relative">
+                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent animate-gradient font-bold">
+                      COGNITECHX
+                    </span>
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300 group-hover:w-full"></span>
+                  </p>
                 </div>
                 <PanelLeft className="app-sidebar__collapse-icon" />
               </div>
