@@ -48,7 +48,6 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -317,24 +316,6 @@ const CourseEditor = () => {
                 placeholder="Share your professional experience and expertise..."
                 className="w-full"
               />
-
-              {/* Course Picture Upload */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Course Picture
-                </label>
-                <div className="grid gap-4 sm:grid-cols-[1fr_2fr] items-center">
-                  <div className="relative w-32 h-32 rounded-lg border border-dashed border-gray-400 p-2">
-                    <Image
-                      src={course?.picture || "/placeholder.png"}
-                      alt="Course Picture"
-                      fill
-                      className="object-cover rounded-lg"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Sections Editor */}

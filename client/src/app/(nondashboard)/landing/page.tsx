@@ -20,6 +20,8 @@ import { useRouter } from "next/navigation";
 import CourseCardSearch from "@/components/CourseCardSearch";
 // Import a custom component for displaying course details in a card format.
 
+import { useUser } from "@clerk/nextjs";
+
 const LoadingSkeleton = () => {
   // Functional component for displaying a skeleton loader while the page is loading.
   return (
@@ -74,6 +76,9 @@ const Landing = () => {
   const { data: courses, isLoading, isError } = useGetCoursesQuery({});
   // Fetches course data and handles loading and error states.
 
+  const { user } = useUser();
+  const userRole = user?.publicMetadata?.role;
+
   const handleCourseClick = (courseId: string) => {
     // Function to handle clicks on a course card and navigate to the course details page.
     router.push(`/search?id=${courseId}`, {
@@ -107,11 +112,22 @@ const Landing = () => {
             <br />
             Courses when you need them and want them.
           </p>
-          <div className="landing__cta">
+          <div className="landing__cta flex gap-4">
             {/* Call-to-action button linking to the search page. */}
             <Link href="/search" scroll={false}>
               <div className="landing__cta-button">Search for Courses</div>
             </Link>
+            {/* Role-specific navigation button */}
+            {user && (
+              <Link
+                href={userRole === "teacher" ? "/teacher/courses" : "/user/courses"}
+                scroll={false}
+              >
+                <div className="landing__cta-button">
+                  {userRole === "teacher" ? "Go to Teacher Dashboard" : "Go to My Courses"}
+                </div>
+              </Link>
+            )}
           </div>
         </div>
         <div className="landing__hero-images">
