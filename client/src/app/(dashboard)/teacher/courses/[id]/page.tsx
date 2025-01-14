@@ -48,8 +48,10 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import React, { useEffect } from "react";
+import Image from "next/image";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 const CourseEditor = () => {
   const router = useRouter(); // Navigation hook
@@ -73,11 +75,50 @@ const CourseEditor = () => {
       courseCategory: "",
       coursePrice: "0",
       courseStatus: false,
+      teacherExperience: "",
+      teacherTitle: "",
     },
   });
 
+  // Add state for upload progress
+  const [uploadProgress, setUploadProgress] = useState({
+    isUploading: false,
+    progress: 0,
+    fileName: "",
+    counter: 1,
+    startTime: 0,
+  });
 
-  // Effect to populate the form and Redux state with course data when fetched.
+  // Counter effect
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    
+    if (uploadProgress.isUploading) {
+      const now = Date.now();
+      setUploadProgress(prev => ({ ...prev, startTime: now }));
+      
+      intervalId = setInterval(() => {
+        setUploadProgress(prev => {
+          const elapsedTime = Date.now() - prev.startTime;
+          
+          // If upload takes less than 1 second, close spinner
+          if (elapsedTime < 1000 && prev.progress === 100) {
+            return { ...prev, isUploading: false };
+          }
+          
+          // Increment counter up to 100
+          const newCounter = prev.counter < 100 ? prev.counter + 1 : prev.counter;
+          return { ...prev, counter: newCounter };
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [uploadProgress.isUploading]);
+
+  // Effect to populate the form and Redux state with course data when fetched
   useEffect(() => {
     if (course) {
       methods.reset({
@@ -86,21 +127,47 @@ const CourseEditor = () => {
         courseCategory: course.category,
         coursePrice: centsToDollars(course.price),
         courseStatus: course.status === "Published",
+        teacherExperience: course.teacherExperience || "",
+        teacherTitle: course.teacherTitle || "",
       });
       dispatch(setSections(course.sections || [])); // Populate sections in Redux state
     }
   }, [course, methods]); // eslint-disable-line react-hooks/exhaustive-deps
 
-
   // Handles form submission: updates course details and uploads videos if necessary.
   const onSubmit = async (data: CourseFormData) => {
     try {
+      // Set initial upload state
+      setUploadProgress({
+        isUploading: true,
+        progress: 0,
+        fileName: "",
+        counter: 1,
+        startTime: 0,
+      });
+
       // Upload videos and prepare updated sections
       const updatedSections = await uploadAllVideos(
         sections,
         id,
-        getUploadVideoUrl
+        getUploadVideoUrl,
+        (progress: number, fileName: string) => {
+          setUploadProgress((prev) => ({
+            ...prev,
+            progress,
+            fileName,
+          }));
+        }
       );
+
+      // Reset upload state
+      setUploadProgress({
+        isUploading: false,
+        progress: 0,
+        fileName: "",
+        counter: 1,
+        startTime: 0,
+      });
 
       // Prepare form data for the update
       const formData = createCourseFormData(data, updatedSections);
@@ -111,14 +178,47 @@ const CourseEditor = () => {
         formData,
       }).unwrap();
 
+      toast.success("Course updated successfully!");
       refetch(); // Refresh course data after update
     } catch (error) {
       console.error("Failed to update course:", error);
+      toast.error("Failed to update course. Please try again.");
+      setUploadProgress({
+        isUploading: false,
+        progress: 0,
+        fileName: "",
+        counter: 1,
+        startTime: 0,
+      });
     }
   };
 
   return (
     <div>
+      {/* Upload Progress Overlay */}
+      {uploadProgress.isUploading && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-customgreys-darkGrey p-6 rounded-lg max-w-md w-full mx-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-700"></div>
+              </div>
+              <h3 className="text-lg font-semibold text-center text-white">Uploading Video</h3>
+              <p className="text-sm text-gray-400 text-center">{uploadProgress.fileName}</p>
+              <div className="w-full bg-gray-700 rounded-full h-2.5">
+                <div
+                  className="bg-primary-700 h-2.5 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress.progress}%` }}
+                ></div>
+              </div>
+              <div className="flex justify-between text-sm text-gray-400">
+                <span>{uploadProgress.progress.toFixed(0)}% Complete</span>
+                <span>Counter: {uploadProgress.counter}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Back to Courses Button */}
       <div className="flex items-center gap-5 mb-5">
         <button
@@ -132,7 +232,7 @@ const CourseEditor = () => {
 
       {/* Course Form */}
       <Form {...methods}>
-        <form onSubmit={methods.handleSubmit(onSubmit)}>
+        <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
           {/* Header with Course Status Switch and Save Button */}
           <Header
             title="Course Setup"
@@ -188,13 +288,10 @@ const CourseEditor = () => {
                 type="select"
                 placeholder="Select category here"
                 options={[
-                  { value: "technology", label: "Technology" },
+                  { value: "cloud-computing", label: "Cloud Computing" },
                   { value: "science", label: "Science" },
                   { value: "mathematics", label: "Mathematics" },
-                  {
-                    value: "Artificial Intelligence",
-                    label: "Artificial Intelligence",
-                  },
+                  { value: "artificial-intelligence", label: "Artificial Intelligence" },
                 ]}
               />
 
@@ -204,6 +301,40 @@ const CourseEditor = () => {
                 type="number"
                 placeholder="0"
               />
+
+              <CustomFormField
+                name="teacherTitle"
+                label="Your Professional Title"
+                type="text"
+                placeholder="e.g., Senior Software Engineer, Data Scientist, etc."
+                className="w-full"
+              />
+
+              <CustomFormField
+                name="teacherExperience"
+                label="Your Professional Experience"
+                type="textarea"
+                placeholder="Share your professional experience and expertise..."
+                className="w-full"
+              />
+
+              {/* Course Picture Upload */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Course Picture
+                </label>
+                <div className="grid gap-4 sm:grid-cols-[1fr_2fr] items-center">
+                  <div className="relative w-32 h-32 rounded-lg border border-dashed border-gray-400 p-2">
+                    <Image
+                      src={course?.picture || "/placeholder.png"}
+                      alt="Course Picture"
+                      fill
+                      className="object-cover rounded-lg"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Sections Editor */}

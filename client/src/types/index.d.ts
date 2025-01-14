@@ -49,6 +49,8 @@ export interface Course {
   courseId: string; // Unique course ID
   teacherId: string; // Teacher's user ID
   teacherName: string; // Name of the teacher
+  teacherTitle?: string; // Teacher's professional title
+  teacherExperience?: string; // Teacher's professional experience
   title: string; // Course title
   description?: string; // Course description
   category: string; // Course category
@@ -58,6 +60,7 @@ export interface Course {
   status: "Draft" | "Published"; // Course status
   sections: Section[]; // List of sections in the course
   enrollments?: Array<{ userId: string }>; // Users enrolled in the course
+  picture?: string; // Course picture
 }
 
 // ======================== Transaction Interface ========================
@@ -223,6 +226,7 @@ interface CourseFormData {
   courseCategory: string;
   coursePrice: string;
   courseStatus: boolean;
+  teacherExperience: string;
 }
 
 export { type SearchCourseCardProps }; // Ensures the file is treated as a module

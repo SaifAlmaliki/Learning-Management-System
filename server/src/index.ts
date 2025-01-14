@@ -1,5 +1,9 @@
 import express from "express";
 import dotenv from "dotenv"; // dotenv is used to load environment variables from a .env file into process.env.
+dotenv.config();
+
+console.log('Environment variables loaded');
+
 import bodyParser from "body-parser"; // Middleware for parsing request bodies.
 import cors from "cors"; // Middleware to enable Cross-Origin Resource Sharing.
 import helmet from "helmet"; // Middleware to enhance security by setting various HTTP headers.
@@ -9,6 +13,18 @@ import serverless from "serverless-http"; // Serverless framework for handling A
 import seed from "./seed/seedDynamodb"; // Custom module for seeding DynamoDB with initial data.
 import { clerkMiddleware, createClerkClient,requireAuth} from "@clerk/express"; // Clerk middleware and utilities for user authentication and management.
 
+// Configure AWS
+console.log('Configuring AWS...');
+const ddb = new dynamoose.aws.ddb.DynamoDB({
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string
+  },
+  region: process.env.AWS_REGION
+});
+dynamoose.aws.ddb.set(ddb);
+console.log('AWS configured successfully');
+
 // Importing route modules
 import courseRoutes from "./routes/courseRoutes"; // Routes for managing courses.
 import userClerkRoutes from "./routes/userClerkRoutes"; // Routes for user-related operations via Clerk.
@@ -16,9 +32,6 @@ import transactionRoutes from "./routes/transactionRoutes"; // Routes for handli
 import userCourseProgressRoutes from "./routes/userCourseProgressRoutes"; // Routes for tracking user course progress.
 
 /* CONFIGURATIONS */
-// Load environment variables from the .env file into process.env.
-dotenv.config();
-
 // Check if the application is running in a production environment.
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -61,12 +74,17 @@ app.use('/courses', courseRoutes); // Public route
 
 /* SERVER */
 // Define the server port from the environment variable or default to 3000.
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
-// Start the Express server LOCAL if not in production.
-if (!isProduction) {
+// Start the Express server if not in AWS Lambda environment
+if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  console.log('Starting server...');
+  console.log(`Environment: ${process.env.NODE_ENV}`);
+  console.log(`Port configured in .env: ${process.env.PORT}`);
+  console.log(`Final port being used: ${port}`);
+
   app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+    console.log(`✅ Server is running on http://localhost:${port}`);
   });
 }
 

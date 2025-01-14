@@ -338,6 +338,8 @@ export const createCourseFormData = (
   formData.append("category", data.courseCategory);
   formData.append("price", data.coursePrice.toString());
   formData.append("status", data.courseStatus ? "Published" : "Draft");
+  formData.append("teacherTitle", data.teacherTitle);
+  formData.append("teacherExperience", data.teacherExperience);
 
   /**
    * Create a modified version of the sections array.
@@ -363,13 +365,15 @@ export const createCourseFormData = (
  * @param localSections - An array of sections, each containing chapters with potential video files.
  * @param courseId - The ID of the course the videos belong to.
  * @param getUploadVideoUrl - Function to fetch pre-signed URLs for uploading videos.
+ * @param onProgress - Optional callback to report upload progress.
  *
  * @returns An array of updated sections with uploaded video URLs.
  */
 export const uploadAllVideos = async (
   localSections: Section[],
   courseId: string,
-  getUploadVideoUrl: any
+  getUploadVideoUrl: any,
+  onProgress?: (progress: number, fileName: string) => void
 ) => {
   console.log("🎬 Starting batch upload process for all videos...");
   console.log(`📊 Total sections to process: ${localSections.length}`);
@@ -392,7 +396,8 @@ export const uploadAllVideos = async (
                   chapter,
                   courseId,
                   section.sectionId,
-                  getUploadVideoUrl
+                  getUploadVideoUrl,
+                  onProgress
                 );
                 return updatedChapter;
               } catch (error) {
@@ -426,6 +431,7 @@ export const uploadAllVideos = async (
  * @param courseId - The ID of the course the video belongs to.
  * @param sectionId - The ID of the section containing the chapter.
  * @param getUploadVideoUrl - Function to fetch the pre-signed URL for video upload.
+ * @param onProgress - Optional callback to report upload progress.
  *
  * @returns The updated chapter object with the uploaded video's URL.
  */
@@ -433,7 +439,8 @@ async function uploadVideo(
   chapter: Chapter,
   courseId: string,
   sectionId: string,
-  getUploadVideoUrl: any
+  getUploadVideoUrl: any,
+  onProgress?: (progress: number, fileName: string) => void
 ) {
   const file = chapter.video as File;
   console.log(`\n🚀 Starting upload process for video: ${file.name}`);
@@ -464,6 +471,20 @@ async function uploadVideo(
       },
       body: file,
     });
+
+    // Track upload progress
+    const reader = response.body?.getReader();
+    const contentLength = file.size;
+    let receivedLength = 0;
+
+    while (true) {
+      const { done, value } = await reader?.read() || { done: true, value: undefined };
+      if (done) break;
+
+      receivedLength += value?.length || 0;
+      const progress = (receivedLength / contentLength) * 100;
+      onProgress?.(progress, file.name);
+    }
 
     if (!response.ok) {
       throw new Error(`Upload failed with status: ${response.status}`);

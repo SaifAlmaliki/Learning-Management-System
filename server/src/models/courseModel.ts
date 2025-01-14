@@ -103,6 +103,12 @@ const courseSchema = new Schema(
       type: String,
       required: true,
     },
+    teacherTitle: {
+      type: String,
+    },
+    teacherExperience: {
+      type: String,
+    },
     // Title of the course
     title: {
       type: String,
