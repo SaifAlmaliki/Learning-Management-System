@@ -214,62 +214,13 @@ export const getUploadVideoUrl = async (req: Request, res: Response): Promise<vo
 
     // Generate signed URL for PUT operation
     const uploadUrl = s3.getSignedUrl("putObject", s3Params);
-    const videoUrl = `${process.env.CLOUDFRONT_DOMAIN}/videos/${uniqueId}/${fileName}`;
+    const videoUrl = `https://${process.env.CLOUDFRONT_DOMAIN}/videos/${uniqueId}/${fileName}`;
 
     res.json({
       message: "Upload URL generated successfully",
       data: { uploadUrl, videoUrl },
     });
   } catch (error) {
-    res.status(500).json({ message: "Error generating upload URL", error });
-  }
-};
-
-// ======================== Generate Upload Picture URL ========================
-/**
- * Generates a signed upload URL for course pictures on AWS S3.
- * - Requires `fileName` and `fileType` in the request body.
- * - The generated URL is valid for 300 seconds.
- */
-export const getUploadPictureUrl = async (req: Request, res: Response): Promise<void> => {
-  console.log("Generating upload URL for course picture...");
-  console.log("Request body:", req.body);
-  const { fileName, fileType } = req.body;
-
-  if (!fileName || !fileType) {
-    console.error("Missing required fields: fileName or fileType");
-    res.status(400).json({ message: "File name and type are required" });
-    return;
-  }
-
-  try {
-    const uniqueId = uuidv4();
-    const s3Key = `pictures/${uniqueId}/${fileName}`;
-    console.log(`Generated S3 key: ${s3Key}`);
-
-    const s3Params = {
-      Bucket: process.env.S3_BUCKET_NAME || "",
-      Key: s3Key,
-      Expires: 300,
-      ContentType: fileType,
-    };
-
-    // Generate signed URL for PUT operation
-    const uploadUrl = s3.getSignedUrl("putObject", s3Params);
-    const pictureUrl = `${process.env.CLOUDFRONT_DOMAIN}/pictures/${uniqueId}/${fileName}`;
-
-    console.log("Generated URLs:");
-    console.log("Upload URL:", uploadUrl);
-    console.log("Picture URL:", pictureUrl);
-
-    const response = {
-      message: "Upload URL generated successfully",
-      data: { uploadUrl, pictureUrl },
-    };
-    console.log("Sending response:", response);
-    res.json(response);
-  } catch (error) {
-    console.error("Error generating upload URL:", error);
     res.status(500).json({ message: "Error generating upload URL", error });
   }
 };
