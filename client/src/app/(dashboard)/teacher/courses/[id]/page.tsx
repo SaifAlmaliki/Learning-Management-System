@@ -210,9 +210,8 @@ const CourseEditor = () => {
                   style={{ width: `${uploadProgress.progress}%` }}
                 ></div>
               </div>
-              <div className="flex justify-between text-sm text-gray-400">
-                <span>{uploadProgress.progress.toFixed(0)}% Complete</span>
-                <span>Counter: {uploadProgress.counter}</span>
+              <div className="text-sm text-gray-400 text-center">
+                {uploadProgress.counter}% Complete
               </div>
             </div>
           </div>
