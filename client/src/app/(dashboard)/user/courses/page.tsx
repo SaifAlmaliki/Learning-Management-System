@@ -15,6 +15,8 @@ import Toolbar from "@/components/Toolbar";       // Search and filter toolbar
 import CourseCard from "@/components/CourseCard"; // Individual course display card
 import Header from "@/components/Header";         // Page header
 import Loading from "@/components/Loading";       // Loading spinner
+import { FaGraduationCap } from "react-icons/fa"; // Icon for empty courses message
+import Link from "next/link";                     // Link for course catalog
 
 // Import hooks
 import { useGetUserEnrolledCoursesQuery } from "@/state/api";
@@ -94,8 +96,23 @@ const Courses = () => {
   if (!user) return <div>Please sign in to view your courses.</div>;
 
   // Display message if no courses are available or an error occurs
-  if (isError || !courses || courses.length === 0)
-    return <div>You are not enrolled in any courses yet.</div>;
+  if (isError || !courses || courses.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8">
+        <FaGraduationCap className="text-6xl text-gray-400 mb-4" />
+        <h2 className="text-2xl font-semibold text-gray-700 mb-2">No Courses Yet</h2>
+        <p className="text-gray-500 mb-6 max-w-md">
+          You haven't enrolled in any courses yet. Start your learning journey by exploring our course catalog!
+        </p>
+        <Link 
+          href="/search" 
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Browse Courses
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="user-courses">

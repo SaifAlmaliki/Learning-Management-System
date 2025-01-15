@@ -4,11 +4,12 @@
  */
 import { Request, Response } from "express";
 import Course from "../models/courseModel";
-import AWS from "aws-sdk";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { v4 as uuidv4 } from "uuid";
 import { getAuth } from "@clerk/express";
 
-const s3 = new AWS.S3();
+const s3Client = new S3Client({});
 console.log("AWS S3 instance initialized");
 
 // ======================== List Courses ========================
@@ -205,15 +206,14 @@ export const getUploadVideoUrl = async (req: Request, res: Response): Promise<vo
     const uniqueId = uuidv4();
     const s3Key = `videos/${uniqueId}/${fileName}`;
 
-    const s3Params = {
+    const putObjectCommand = new PutObjectCommand({
       Bucket: process.env.S3_BUCKET_NAME || "",
       Key: s3Key,
-      Expires: 60,
       ContentType: fileType,
-    };
+    });
 
     // Generate signed URL for PUT operation
-    const uploadUrl = s3.getSignedUrl("putObject", s3Params);
+    const uploadUrl = await getSignedUrl(s3Client, putObjectCommand, { expiresIn: 60 });
     const videoUrl = `https://${process.env.CLOUDFRONT_DOMAIN}/videos/${uniqueId}/${fileName}`;
 
     res.json({
