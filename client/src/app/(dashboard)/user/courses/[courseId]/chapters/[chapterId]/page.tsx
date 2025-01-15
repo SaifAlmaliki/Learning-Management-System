@@ -100,34 +100,28 @@ const Course = () => {
         {/* Video Player */}
         <Card className="course__video">
           <CardContent className="course__video-container">
-            {currentChapter?.video ? (
-              <>
-                {console.log('Debug - Video URL:', `https://${currentChapter.video}`)}
-                <ReactPlayer
-                  ref={playerRef}
-                  url={`https://${currentChapter.video}`}
-                  controls
-                  width="100%"
-                  height="100%"
-                  onProgress={handleProgress}
-                  onError={(error) => {
-                    console.error('Video Player Error:', error);
-                    console.log('Attempted URL:', `https://${currentChapter.video}`);
-                  }}
-                  onReady={() => console.log('Video Player Ready')}
-                  playsinline
-                  config={{
-                    file: {
-                      attributes: {
-                        controlsList: "nodownload",
-                        crossOrigin: "anonymous",
-                      },
-                      forceVideo: true,
-                      tracks: [],
+            {currentChapter?.video && typeof currentChapter.video === 'string' ? (
+              <ReactPlayer
+                ref={playerRef}
+                url={currentChapter.video}
+                controls
+                width="100%"
+                height="100%"
+                onProgress={handleProgress}
+                onError={(error) => console.error('Video playback error:', error)}
+                onReady={() => console.log('Video ready')}
+                playsinline
+                config={{
+                  file: {
+                    attributes: {
+                      controlsList: "nodownload",
+                      crossOrigin: "anonymous",
                     },
-                  }}
-                />
-              </>
+                    forceVideo: true,
+                    tracks: [],
+                  },
+                }}
+              />
             ) : (
               <div className="course__no-video">
                 No video available for this chapter.
