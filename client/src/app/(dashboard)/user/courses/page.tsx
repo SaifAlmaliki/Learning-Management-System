@@ -102,10 +102,10 @@ const Courses = () => {
         <FaGraduationCap className="text-6xl text-gray-400 mb-4" />
         <h2 className="text-2xl font-semibold text-gray-700 mb-2">No Courses Yet</h2>
         <p className="text-gray-500 mb-6 max-w-md">
-          You haven't enrolled in any courses yet. Start your learning journey by exploring our course catalog!
+          You haven&apos;t enrolled in any courses yet. Start your learning journey by exploring our course catalog!
         </p>
-        <Link 
-          href="/search" 
+        <Link
+          href="/search"
           className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
         >
           Browse Courses
