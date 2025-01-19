@@ -40,6 +40,15 @@ export const getUserEnrolledCourses = async ( req: Request, res: Response): Prom
       .eq(userId)
       .exec();
 
+    // If user hasn't enrolled in any courses, return empty array
+    if (!enrolledCourses || enrolledCourses.length === 0) {
+      res.json({
+        message: "No enrolled courses found",
+        data: [],
+      });
+      return;
+    }
+
     // Extract course IDs from progress records
     const courseIds = enrolledCourses.map((item: any) => item.courseId);
 
@@ -51,9 +60,10 @@ export const getUserEnrolledCourses = async ( req: Request, res: Response): Prom
       data: courses,
     });
   } catch (error) {
+    console.error('Error in getUserEnrolledCourses:', error);
     res.status(500).json({
-      message: "Error retrieving enrolled courses",
-      error,
+      message: "Internal server error",
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 };
