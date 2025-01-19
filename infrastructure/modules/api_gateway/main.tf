@@ -180,6 +180,54 @@ resource "aws_api_gateway_gateway_response" "cors_5xx" {
   }
 }
 
+# Create IAM role for API Gateway CloudWatch logging
+resource "aws_iam_role" "api_gateway_cloudwatch" {
+  name = "api-gateway-cloudwatch-${var.environment}"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "apigateway.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+# Attach CloudWatch logging policy to the role
+resource "aws_iam_role_policy" "api_gateway_cloudwatch" {
+  name = "api-gateway-cloudwatch-${var.environment}"
+  role = aws_iam_role.api_gateway_cloudwatch.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams",
+          "logs:PutLogEvents",
+          "logs:GetLogEvents",
+          "logs:FilterLogEvents"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Set up account-level settings for API Gateway
+resource "aws_api_gateway_account" "main" {
+  cloudwatch_role_arn = aws_iam_role.api_gateway_cloudwatch.arn
+}
+
 # Create API deployment
 resource "aws_api_gateway_deployment" "api" {
   rest_api_id = aws_api_gateway_rest_api.lms_api.id
@@ -202,6 +250,21 @@ resource "aws_api_gateway_stage" "dev" {
   deployment_id = aws_api_gateway_deployment.api.id
   rest_api_id   = aws_api_gateway_rest_api.lms_api.id
   stage_name    = var.environment
+}
+
+# Configure method settings for the API Gateway stage
+resource "aws_api_gateway_method_settings" "all" {
+  rest_api_id = aws_api_gateway_rest_api.lms_api.id
+  stage_name  = aws_api_gateway_stage.dev.stage_name
+  method_path = "*/*"
+
+  settings {
+    metrics_enabled        = true
+    logging_level         = "INFO"
+    data_trace_enabled    = true
+    throttling_burst_limit = 5000
+    throttling_rate_limit  = 10000
+  }
 }
 
 # Add Lambda permission for API Gateway
