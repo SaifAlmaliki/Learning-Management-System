@@ -1,125 +1,127 @@
 # CognitechX Academy Infrastructure
 
-This directory contains the Terraform infrastructure code for the CognitechX Academy learning management system. The infrastructure is designed to be scalable, secure, and cost-effective using various AWS services.
+This directory contains the Terraform infrastructure code for the CognitechX Academy Learning Management System. The infrastructure is designed to be scalable, secure, and cost-effective.
 
 ## Architecture Overview
 
-![Infrastructure Architecture](./docs/architecture.png)
+The infrastructure is built on AWS and consists of the following main components:
 
-The infrastructure consists of the following main components:
+### Compute and API Layer
+- **AWS Lambda**: Serverless compute service running the Node.js backend
+- **API Gateway**: RESTful API interface for the frontend to communicate with Lambda functions
+- **IAM Roles**: Managed permissions for Lambda to access other AWS services
 
-### 1. API Gateway (modules/api_gateway)
-- Serves as the main entry point for all API requests
-- Configured with a REST API setup
-- Endpoint: `https://bo77ck5tr4.execute-api.eu-central-1.amazonaws.com/dev`
-- Proxies all requests to the Lambda function
+### Database Layer
+1. **Course Table (DynamoDB)**
+   - Primary Key: `courseId`
+   - Stores course information including:
+     - Title, description, category
+     - Teacher information
+     - Price and status
+     - Sections and chapters structure
 
-### 2. Lambda Function (modules/lambda)
-- Runs the Node.js Express backend application
-- Handles all API requests from API Gateway
-- Environment variables include:
-  - S3 bucket name for file storage
-  - CloudFront domain for frontend
-  - Stripe and Clerk API keys
-- Memory: 1024MB
-- Timeout: 30 seconds
+2. **User Course Progress Table (DynamoDB)**
+   - Composite Key: `userId` (hash) + `courseId` (range)
+   - Global Secondary Index: `EnrollmentDateIndex`
+   - Tracks:
+     - User's progress in each course
+     - Completion status of chapters
+     - Enrollment dates
+     - Quiz scores and achievements
 
-### 3. S3 Bucket (modules/s3)
-- Stores all user-uploaded files
-- Configured with:
-  - Versioning enabled
-  - CORS rules for frontend access
-  - Public read access for files
-  - Bucket policy allowing necessary operations
+3. **Transaction Table (DynamoDB)**
+   - Composite Key: `userId` (hash) + `transactionId` (range)
+   - Global Secondary Index for `courseId`
+   - Records:
+     - Course purchase transactions
+     - Payment information
+     - Purchase dates
+     - Transaction status
 
-### 4. CloudFront Distribution (modules/cloudfront)
-- CDN for serving frontend assets
-- Connected to the S3 bucket
-- Provides HTTPS access to the frontend
+### Storage and Content Delivery
+- **S3 Bucket**:
+  - Stores course videos and other static content
+  - Configured with CORS for frontend access
+  - Public access controlled via bucket policy
+  - Versioning configured for content management
 
-### 5. DynamoDB (modules/dynamodb)
-- NoSQL database for storing application data
-- Tables are created and managed through the Lambda function
+- **CloudFront Distribution**:
+  - Global content delivery network
+  - Caches and distributes course videos
+  - HTTPS enabled with custom SSL certificate
+  - Optimized for video streaming
+  - Edge locations for reduced latency
+  - Custom domain support
 
-## Module Dependencies
+### Security
+- **IAM Roles and Policies**: Least privilege access for all components
+- **API Gateway Authorization**: JWT-based authentication
+- **CloudFront OAI**: Secure access to S3 content
+- **CORS Configuration**: Controlled cross-origin access
+- **SSL/TLS**: Encrypted data in transit
 
-```
-API Gateway
-    └── Lambda Function
-        ├── S3 Bucket
-        ├── CloudFront
-        └── DynamoDB
-```
+### Monitoring and Logging
+- **CloudWatch Logs**: Application and access logging
+- **CloudWatch Metrics**: Performance monitoring
+- **X-Ray**: Distributed tracing (optional)
 
-## Environment Configuration
+## Environment Management
 
-The infrastructure supports multiple environments (dev, prod) with environment-specific configurations in:
-- `environments/dev/`
-- `environments/prod/` (when needed)
+The infrastructure supports multiple environments:
+- Development (`dev`)
+- Production (`prod`)
 
-### Key Files
-- `main.tf`: Main configuration file that imports and configures all modules
-- `variables.tf`: Variable definitions
-- `terraform.tfvars`: Environment-specific values (gitignored for security)
-- `outputs.tf`: Outputs important information like endpoints and resource names
+Each environment has its own:
+- State file in S3
+- DynamoDB tables
+- Lambda functions
+- API Gateway endpoints
+- CloudFront distribution
 
-## Security Features
+## Infrastructure Modules
 
-1. **IAM Roles and Policies**
-   - Lambda function has specific IAM role with:
-     - DynamoDB access
-     - S3 bucket access
-     - CloudWatch logs access
+The infrastructure is organized into the following modules:
 
-2. **S3 Security**
-   - Versioning enabled
-   - Public access configured only for necessary operations
-   - CORS rules for frontend access
+- `api_gateway/`: API Gateway configuration
+- `cloudfront/`: CDN setup for video delivery
+- `dynamodb/`: Database tables and indexes
+- `lambda/`: Serverless function configuration
+- `s3/`: Storage bucket setup
+- `route53/`: DNS configuration (if applicable)
 
-## Deployment Instructions
+## Getting Started
 
-1. Initialize Terraform:
+1. Install required tools:
+   - Terraform (version 1.0 or later)
+   - AWS CLI configured with appropriate credentials
+
+2. Initialize Terraform:
    ```bash
    terraform init
    ```
 
-2. Create terraform.tfvars with required variables:
-   ```hcl
-   environment = "dev"
-   aws_region = "eu-central-1"
-   stripe_secret_key = "your-stripe-key"
-   clerk_publishable_key = "your-clerk-pub-key"
-   clerk_secret_key = "your-clerk-secret-key"
-   ```
-
-3. Deploy the infrastructure:
+3. Plan the infrastructure:
    ```bash
    terraform plan
+   ```
+
+4. Apply infrastructure:
+   ```bash
    terraform apply
    ```
 
-4. Get the deployment outputs:
-   ```bash
-   terraform output
-   ```
+## Important Notes
 
-## Important URLs and Endpoints
+- The S3 bucket names are globally unique and automatically generated based on account ID and environment
+- CloudFront distributions may take up to 30 minutes to deploy
+- DynamoDB tables are provisioned with minimal capacity by default
+- Lambda functions are configured with environment-specific variables
 
-- API Gateway: `https://bo77ck5tr4.execute-api.eu-central-1.amazonaws.com/dev`
-- CloudFront Distribution: (Check `terraform output cloudfront_domain`)
-- S3 Bucket: (Check `terraform output s3_bucket_domain`)
+## Cleanup
 
-## Frontend Integration
-
-Update the frontend environment variables in `client/.env`:
-```env
-NEXT_PUBLIC_API_BASE_URL="https://bo77ck5tr4.execute-api.eu-central-1.amazonaws.com/dev"
+To destroy the infrastructure:
+```bash
+terraform destroy
 ```
 
-## Backend Integration
-
-Update the backend environment variables in `server/.env`:
-```env
-NODE_ENV="production"
-S3_BUCKET_NAME="[from terraform output s3_bucket_name]"
-CLOUDFRONT_DOMAIN="[from terraform output cloudfront_domain]"
+**Note**: This will remove all resources including data in DynamoDB tables and objects in S3 buckets.

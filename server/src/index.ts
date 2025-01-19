@@ -16,11 +16,15 @@ import { clerkMiddleware, createClerkClient,requireAuth} from "@clerk/express"; 
 // Configure AWS
 console.log('Configuring AWS...');
 const ddb = new dynamoose.aws.ddb.DynamoDB({
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string
-  },
-  region: process.env.AWS_REGION
+  ...(process.env.NODE_ENV !== 'production' ? {
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string
+    },
+    region: process.env.AWS_REGION
+  } : {
+    region: process.env.REGION || process.env.AWS_REGION
+  })
 });
 dynamoose.aws.ddb.set(ddb);
 console.log('AWS configured successfully');
