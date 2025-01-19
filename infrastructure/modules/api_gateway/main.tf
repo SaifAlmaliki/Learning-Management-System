@@ -60,16 +60,140 @@ resource "aws_api_gateway_integration" "lambda_root" {
   uri                    = "arn:aws:apigateway:${data.aws_region.current.name}:lambda:path/2015-03-31/functions/${var.lambda_function_arn}/invocations"
 }
 
+# Create OPTIONS method for proxy resource
+resource "aws_api_gateway_method" "proxy_options" {
+  rest_api_id   = aws_api_gateway_rest_api.lms_api.id
+  resource_id   = aws_api_gateway_resource.proxy.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# Create OPTIONS integration for proxy resource
+resource "aws_api_gateway_integration" "proxy_options" {
+  rest_api_id = aws_api_gateway_rest_api.lms_api.id
+  resource_id = aws_api_gateway_resource.proxy.id
+  http_method = aws_api_gateway_method.proxy_options.http_method
+  type        = "MOCK"
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+# Create OPTIONS method response for proxy resource
+resource "aws_api_gateway_method_response" "proxy_options" {
+  rest_api_id = aws_api_gateway_rest_api.lms_api.id
+  resource_id = aws_api_gateway_resource.proxy.id
+  http_method = aws_api_gateway_method.proxy_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+# Create OPTIONS integration response for proxy resource
+resource "aws_api_gateway_integration_response" "proxy_options" {
+  rest_api_id = aws_api_gateway_rest_api.lms_api.id
+  resource_id = aws_api_gateway_resource.proxy.id
+  http_method = aws_api_gateway_method.proxy_options.http_method
+  status_code = aws_api_gateway_method_response.proxy_options.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,DELETE,OPTIONS,PATCH,HEAD'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"  # Allow all origins
+  }
+}
+
+# Create OPTIONS method for root resource
+resource "aws_api_gateway_method" "root_options" {
+  rest_api_id   = aws_api_gateway_rest_api.lms_api.id
+  resource_id   = aws_api_gateway_rest_api.lms_api.root_resource_id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+# Create OPTIONS integration for root resource
+resource "aws_api_gateway_integration" "root_options" {
+  rest_api_id = aws_api_gateway_rest_api.lms_api.id
+  resource_id = aws_api_gateway_rest_api.lms_api.root_resource_id
+  http_method = aws_api_gateway_method.root_options.http_method
+  type        = "MOCK"
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+# Create OPTIONS method response for root resource
+resource "aws_api_gateway_method_response" "root_options" {
+  rest_api_id = aws_api_gateway_rest_api.lms_api.id
+  resource_id = aws_api_gateway_rest_api.lms_api.root_resource_id
+  http_method = aws_api_gateway_method.root_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+# Create OPTIONS integration response for root resource
+resource "aws_api_gateway_integration_response" "root_options" {
+  rest_api_id = aws_api_gateway_rest_api.lms_api.id
+  resource_id = aws_api_gateway_rest_api.lms_api.root_resource_id
+  http_method = aws_api_gateway_method.root_options.http_method
+  status_code = aws_api_gateway_method_response.root_options.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,DELETE,OPTIONS,PATCH,HEAD'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"  # Allow all origins
+  }
+}
+
+# Create API Gateway CORS Gateway Response for 4XX errors
+resource "aws_api_gateway_gateway_response" "cors_4xx" {
+  rest_api_id = aws_api_gateway_rest_api.lms_api.id
+  response_type = "DEFAULT_4XX"
+
+  response_parameters = {
+    "gatewayresponse.header.Access-Control-Allow-Origin" = "'*'"
+    "gatewayresponse.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With'"
+    "gatewayresponse.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,DELETE,OPTIONS,PATCH,HEAD'"
+    "gatewayresponse.header.Access-Control-Allow-Credentials" = "'true'"
+  }
+}
+
+# Create API Gateway CORS Gateway Response for 5XX errors
+resource "aws_api_gateway_gateway_response" "cors_5xx" {
+  rest_api_id = aws_api_gateway_rest_api.lms_api.id
+  response_type = "DEFAULT_5XX"
+
+  response_parameters = {
+    "gatewayresponse.header.Access-Control-Allow-Origin" = "'*'"
+    "gatewayresponse.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With'"
+    "gatewayresponse.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,DELETE,OPTIONS,PATCH,HEAD'"
+    "gatewayresponse.header.Access-Control-Allow-Credentials" = "'true'"
+  }
+}
+
 # Create API deployment
 resource "aws_api_gateway_deployment" "api" {
   rest_api_id = aws_api_gateway_rest_api.lms_api.id
   depends_on = [
     aws_api_gateway_integration.lambda,
     aws_api_gateway_integration.lambda_root,
+    aws_api_gateway_integration.proxy_options,
+    aws_api_gateway_integration.root_options,
+    aws_api_gateway_gateway_response.cors_4xx,
+    aws_api_gateway_gateway_response.cors_5xx
   ]
 
   lifecycle {
-    create_before_destroy = true  # Prevent downtime during updates
+    create_before_destroy = true
   }
 }
 
@@ -78,17 +202,18 @@ resource "aws_api_gateway_stage" "dev" {
   deployment_id = aws_api_gateway_deployment.api.id
   rest_api_id   = aws_api_gateway_rest_api.lms_api.id
   stage_name    = var.environment
-
-  description = "Development Stage for the LMS Backend"
 }
 
-# Grant API Gateway permission to invoke Lambda
-resource "aws_lambda_permission" "apigw_lambda" {
-  statement_id  = "AllowAPIGatewayInvoke"
+# Add Lambda permission for API Gateway
+resource "aws_lambda_permission" "api_gw" {
+  statement_id  = "AllowAPIGatewayInvoke_${var.environment}"
   action        = "lambda:InvokeFunction"
   function_name = var.lambda_function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.lms_api.execution_arn}/*/*"  # Allow all methods and paths
+
+  # The /*/* portion grants access from any method on any resource
+  # within the specified API Gateway.
+  source_arn = "${aws_api_gateway_rest_api.lms_api.execution_arn}/*/*"
 }
 
 output "invoke_url" {

@@ -64,6 +64,9 @@ data "archive_file" "lambda_zip" {
   output_path = "${path.module}/lambda.zip"
 }
 
+# Get current AWS region
+data "aws_region" "current" {}
+
 # Create Lambda function
 resource "aws_lambda_function" "lms_lambda" {
   filename         = data.archive_file.lambda_zip.output_path
@@ -79,6 +82,7 @@ resource "aws_lambda_function" "lms_lambda" {
   environment {
     variables = {
       NODE_ENV             = "production"
+      REGION              = data.aws_region.current.name
       S3_BUCKET_NAME       = var.s3_bucket_name
       CLOUDFRONT_DOMAIN    = var.cloudfront_domain
       STRIPE_SECRET_KEY    = var.stripe_secret_key
