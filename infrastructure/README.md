@@ -2,7 +2,61 @@
 
 This directory contains the Terraform infrastructure code for the CognitechX Academy Learning Management System. The infrastructure is designed to be scalable, secure, and cost-effective.
 
-## Architecture Overview
+![alt text](image.png)
+
+## Overview
+### 1. Frontend Application (Next.js on Vercel)
+- The user interacts with a Next.js frontend application deployed on Vercel.
+
+- When a user logs in, their authentication and authorization are managed by Clerk, a third-party authentication service.
+
+- If the user is authenticated and authorized, they gain access to the backend services via API Gateway.
+
+### 2. Authentication and Authorization
+Clerk handles user authentication and authorization.
+
+Users are categorized into two roles:
+
+- Teachers: Users with a "teacher" flag can create and upload courses.
+
+- Students: Users without the "teacher" flag can only enroll in and watch courses.
+
+### 3. Backend Services (AWS Lambda)
+- The backend logic is implemented using AWS Lambda functions, which are serverless compute services.
+
+- These Lambda functions handle various operations such as course creation, enrollment, and video management.
+
+### 4. Course Creation by Teachers
+A teacher can create a course by entering course information through the frontend.
+
+The course information is stored in three DynamoDB tables:
+
+- Course Table: Stores course details like title, description, category, teacher information, price, and status.
+
+- User Course Progress Table: Tracks user progress, completion status, and enrollment dates.
+
+- Transaction Table: Records course purchase transactions and payment information.
+
+### 5. Video Upload and Storage
+- Teachers can upload course videos to an S3 bucket, which is configured for secure storage.
+
+- The S3 bucket is integrated with CloudFront, a content delivery network (CDN), to distribute videos globally.
+
+- CloudFront ensures optimized video streaming with reduced latency by caching content at edge locations.
+
+### 6. Course Enrollment by Students
+- Students can browse available courses and enroll in them.
+
+- Upon enrollment, the transaction is recorded in the Transaction Table, and the student's progress is tracked in the User Course Progress Table.
+
+### 7. Video Streaming for Students
+- Enrolled students can watch course videos that are streamed via CloudFront.
+
+- CloudFront ensures efficient delivery of video content, providing a smooth viewing experience with HTTPS encryption for secure data transfer.
+
+
+
+## Architecture Description
 
 The infrastructure is built on AWS and consists of the following main components:
 
@@ -53,17 +107,6 @@ The infrastructure is built on AWS and consists of the following main components
   - Edge locations for reduced latency
   - Custom domain support
 
-### Security
-- **IAM Roles and Policies**: Least privilege access for all components
-- **API Gateway Authorization**: JWT-based authentication
-- **CloudFront OAI**: Secure access to S3 content
-- **CORS Configuration**: Controlled cross-origin access
-- **SSL/TLS**: Encrypted data in transit
-
-### Monitoring and Logging
-- **CloudWatch Logs**: Application and access logging
-- **CloudWatch Metrics**: Performance monitoring
-- **X-Ray**: Distributed tracing (optional)
 
 ## Environment Management
 
@@ -87,7 +130,9 @@ The infrastructure is organized into the following modules:
 - `dynamodb/`: Database tables and indexes
 - `lambda/`: Serverless function configuration
 - `s3/`: Storage bucket setup
-- `route53/`: DNS configuration (if applicable)
+
+
+
 
 ## Getting Started
 
